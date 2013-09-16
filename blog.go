@@ -15,8 +15,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	//blog "github.com/ndrew/blog"
-	"github.com/ndrew/blog"
+	//"github.com/ndrew/stagosaurus"
 	"path/filepath"
 	"sort"
 )
@@ -55,37 +54,39 @@ func listCommands(full_description bool) {
 	}
 }
 
-func newPost(args []string, engine *blog.Engine) {
+/*func newPost(args []string, engine *stagosaurus.Engine) {
 	// do something here
 	fmt.Println("new post!")
 	editPost(args, engine)
 }
 
-func editPost(args []string, engine *blog.Engine) {
+func editPost(args []string, engine *stagosaurus.Engine) {
 	// do something here
 	fmt.Println("edit post!")
 }
 
-func publishPosts(args []string, engine *blog.Engine) {
+func publishPosts(args []string, engine *stagosaurus.Engine) {
 	// do something here
 	fmt.Println("publish!")
-}
+}*/
 
 func main() {
 
 	// TODO: loading from filesystem or --config
-	cfg := new(blog.Config)
-	cfg.BaseUrl = "http://localhost:666/blog/"
+	/*
+		    cfg := new(stagosaurus.Config)
+			cfg.BaseUrl = "http://localhost:666/blog/"
 
-	renderingStrategy := new(blog.RenderingStrategy)
+			renderingStrategy := new(stagosaurus.RenderingStrategy)
 
-	postsFactory := new(blog.FolderPostFactory)
-	postsFactory.PostsDir = "/Users/ndrw/Desktop/dev/site/blog/posts"
+			postsFactory := new(stagosaurus.FolderPostFactory)
+			postsFactory.PostsDir = "/Users/ndrw/Desktop/dev/site/blog/posts"
 
-	posts := postsFactory.GetPosts()
+			posts := postsFactory.GetPosts()
 
-	engine := blog.New(cfg, renderingStrategy, posts)
-	// engine.RunServer(".", "bla-bla")
+			engine := stagosaurus.New(cfg, renderingStrategy, posts)
+			// engine.RunServer(".", "bla-bla")
+	*/
 
 	var configFile = ""
 	flag.StringVar(&configFile, "config", "default.cfg", "help message for flagname")
@@ -93,14 +94,17 @@ func main() {
 
 	var configFileAbs, err = filepath.Abs(configFile)
 
-	var metadata *blog.AppCfg = &blog.AppCfg{Foo: "tttt"}
 	if err != nil {
-		metadata = &blog.AppCfg{Foo: "xyz"}
+		println(configFileAbs)
+	}
+	/*var metadata *stagosaurus.AppCfg = &stagosaurus.AppCfg{Foo: "tttt"}
+	if err != nil {
+		metadata = &stagosaurus.AppCfg{Foo: "xyz"}
 	} else {
 		metadata.ReadConfig(configFileAbs)
-	}
+	}*/
 
-	fmt.Println(metadata.Foo)
+	//fmt.Println(metadata.Foo)
 
 	var action = flag.Arg(0)
 	if action == "autocomplete" {
@@ -112,16 +116,18 @@ func main() {
 	var commandParams = []string{}
 	if len(args) > 1 {
 		commandParams = args[1:len(args)]
+
+		println(commandParams)
 	}
 
 	switch {
-	case action == "new":
+	/*case action == "new":
 		newPost(commandParams, engine)
 	case action == "edit":
 		editPost(commandParams, engine)
 	case action == "publish":
 		publishPosts(commandParams, engine)
-
+	*/
 	default:
 		{
 			printHeader()
