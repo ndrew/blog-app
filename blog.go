@@ -15,7 +15,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	//"github.com/ndrew/stagosaurus"
+	blog "github.com/ndrew/stagosaurus"
 	"path/filepath"
 	"sort"
 )
@@ -70,63 +70,64 @@ func publishPosts(args []string, engine *stagosaurus.Engine) {
 	fmt.Println("publish!")
 }*/
 
+func getConfig(configFile string) *blog.Config {
+	cfg := new(blog.Config)
+	// set defaults
+	cfg.BaseUrl = "http://localhost:666/blog/"
+
+	// read config if needed
+	var configFileAbs, err = filepath.Abs(configFile)
+	if err == nil {
+		err = cfg.ReadConfig(configFileAbs)
+		if err != nil {
+			println(err)
+		}
+	} else {
+		println("Can't load config " + configFileAbs)
+	}
+	return cfg
+}
+
 func main() {
-
-	// TODO: loading from filesystem or --config
-	/*
-		    cfg := new(stagosaurus.Config)
-			cfg.BaseUrl = "http://localhost:666/blog/"
-
-			renderingStrategy := new(stagosaurus.RenderingStrategy)
-
-			postsFactory := new(stagosaurus.FolderPostFactory)
-			postsFactory.PostsDir = "/Users/ndrw/Desktop/dev/site/blog/posts"
-
-			posts := postsFactory.GetPosts()
-
-			engine := stagosaurus.New(cfg, renderingStrategy, posts)
-			// engine.RunServer(".", "bla-bla")
-	*/
 
 	var configFile = ""
 	flag.StringVar(&configFile, "config", "default.cfg", "help message for flagname")
 	flag.Parse()
 
-	var configFileAbs, err = filepath.Abs(configFile)
+	config := getConfig(configFile)
 
-	if err != nil {
-		println(configFileAbs)
-	}
-	/*var metadata *stagosaurus.AppCfg = &stagosaurus.AppCfg{Foo: "tttt"}
-	if err != nil {
-		metadata = &stagosaurus.AppCfg{Foo: "xyz"}
-	} else {
-		metadata.ReadConfig(configFileAbs)
-	}*/
+	renderingStrategy := new(blog.RenderingStrategy)
+	postsFactory := new(blog.FileSystem)
+	// todo: do this via config
+	postsFactory.PostsDir = "/Users/ndrw/Desktop/dev/site/blog/posts"
 
-	//fmt.Println(metadata.Foo)
+	engine := blog.New(config, postsFactory, renderingStrategy, nil) // todo: add depoloyer
 
+	// internal cmd app stuff
 	var action = flag.Arg(0)
 	if action == "autocomplete" {
 		listCommands(false)
 		return
 	}
 
+	// shift params for action handlers
 	var args = flag.Args()
-	var commandParams = []string{}
+	var actionParams = []string{}
 	if len(args) > 1 {
-		commandParams = args[1:len(args)]
-
-		println(commandParams)
+		actionParams = args[1:len(args)]
 	}
+
+	// debug output
+	fmt.Printf("action %v, params %v \n", action, actionParams)
+	fmt.Printf("engine %v \n", engine)
 
 	switch {
 	/*case action == "new":
-		newPost(commandParams, engine)
+		newPost(actionParams, engine)
 	case action == "edit":
-		editPost(commandParams, engine)
+		editPost(actionParams, engine)
 	case action == "publish":
-		publishPosts(commandParams, engine)
+		publishPosts(actionParams, engine)
 	*/
 	default:
 		{
