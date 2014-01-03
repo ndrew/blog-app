@@ -1,3 +1,5 @@
+package main
+
 /**
              _
   _ __   __| |_ ____      __
@@ -7,132 +9,153 @@
 
 ------------------------------
 
-Static blog generator for http://sernyak.com
+CLI for blog generator
 
 */
-package main
 
 import (
+	"./lib"
+	"encoding/json"
 	"flag"
 	"fmt"
-	blog "github.com/ndrew/stagosaurus"
+	engine "github.com/ndrew/stagosaurus"
+	"io/ioutil"
 	"path/filepath"
 	"sort"
 )
 
-var COMMANDS = map[string]string{
-	"new":     "<post-name> [<params>] - creates new post and opens editor",
-	"edit":    "<post-name>           - opens post in editor",
-	"publish": "[<post-name>]      - renders markdown posts to html"}
+// TODO: remove hardcode
+func availableCommands() map[string]string {
+	var COMMANDS = map[string]string{
+		"new":     "<post-name> [<params>] - creates new post and opens editor",
+		"edit":    "<post-name>           - opens post in editor",
+		"publish": "[<post-name>]      - renders markdown posts to html"}
 
+	return COMMANDS
+}
+
+//
+//
 func printHeader() {
 	fmt.Println("╔════════════════════════════════════════╗")
 	fmt.Println("╟ ░░░░░░░░░░░ BLOG GENERATOR ░░░░░░░░░░░ ╢")
 	fmt.Println("╚════════════════════════════════════════╝")
+}
+
+//
+//
+func printUsage() {
 	fmt.Println("Usage: blog [--config <cfg-file>] [--help]")
 	fmt.Println("             <command> [<args>]")
 	fmt.Println("──────────────────────────────────────────")
+	fmt.Println("Available commands:")
+
 }
 
-func listCommands(full_description bool) {
-	if full_description {
-		fmt.Println("Available commands:")
-	}
+//
+//
+func listCommands(prettyprint bool) {
+	cmds := availableCommands()
 
 	var keys []string
-	for k := range COMMANDS {
+	for k := range cmds {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 	for _, command := range keys {
-		if full_description {
-			fmt.Println(" ■", command, COMMANDS[command])
+		if prettyprint {
+			fmt.Println(" ■", command, cmds[command])
 		} else {
-			// TODO: params
 			fmt.Println(command)
 		}
 	}
 }
 
-/*func newPost(args []string, engine *stagosaurus.Engine) {
-    // do something here
-    fmt.Println("new post!")
-    editPost(args, engine)
-}
+//
+//
+func readConfig(path string, defaults engine.Config) *engine.Config {
+	cfg := engine.NewConfig(defaults)
 
-func editPost(args []string, engine *stagosaurus.Engine) {
-    // do something here
-    fmt.Println("edit post!")
-}
-
-func publishPosts(args []string, engine *stagosaurus.Engine) {
-    // do something here
-    fmt.Println("publish!")
-}*/
-
-func getConfig(configFile string) *blog.Config {
-	cfg := new(blog.Config)
-	// set defaults
-	cfg.BaseUrl = "http://localhost:666/blog/"
-
-	// read config if needed
-	var configFileAbs, err = filepath.Abs(configFile)
-	if err == nil {
-		err = cfg.ReadConfig(configFileAbs)
-		if err != nil {
-			println(err)
-		}
-	} else {
-		println("Can't load config " + configFileAbs)
+	var realpath, err = filepath.Abs(path)
+	if err != nil {
+		return &cfg
 	}
-	return cfg
+
+	source, err := ioutil.ReadFile(realpath)
+	if err != nil {
+		fmt.Printf("ERR: Config file '%v' is not found.\n", realpath)
+		return &cfg
+	}
+
+	//
+	// JSON stuff
+	//
+	// TODO: move config reading to stago lib
+	var data map[string]*json.RawMessage
+	err = json.Unmarshal(source, &data)
+
+	if err != nil || len(data) == 0 {
+		fmt.Printf("ERR: can't parse JSON from '%v'\n", realpath)
+		return &cfg
+	}
+
+	for k, v := range data {
+		var value interface{}
+		err = json.Unmarshal(*v, &value)
+
+		if err == nil {
+			cfg.Set(k, value)
+		} else {
+			// does this really occurs?
+			fmt.Printf("ERR: couldn't interpret json, '%v':%v \n", k, *v)
+		}
+	}
+
+	return &cfg
 }
 
+//
+// stagosaurus cli
+//
 func main() {
-
 	var configFile = ""
-	flag.StringVar(&configFile, "config", "default.cfg", "help message for flagname")
+	var help = false
+
+	flag.StringVar(&configFile, "config", "default.cfg", "")
+	flag.BoolVar(&help, "help", false, "") // to override the annoying behaviour on --help
 	flag.Parse()
 
-	config := getConfig(configFile)
+	var args = flag.Args()   // shift params for action handlers
+	var action = flag.Arg(0) // internal bash stuff in order to get autocomplete for terminal
 
-	renderingStrategy := new(blog.RenderingStrategy)
-	postsFactory := new(blog.FileSystem)
-	// todo: do this via config
-	postsFactory.PostsDir = "/Users/ndrw/Desktop/dev/site/blog/posts"
-
-	engine := blog.New(config, postsFactory, renderingStrategy, nil) // todo: add depoloyer
-
-	// internal cmd app stuff
-	var action = flag.Arg(0)
 	if action == "autocomplete" {
 		listCommands(false)
 		return
 	}
 
-	// shift params for action handlers
-	var args = flag.Args()
-	var actionParams = []string{}
-	if len(args) > 1 {
-		actionParams = args[1:len(args)]
+	printHeader()
+
+	if help || len(args) == 0 {
+		printUsage()
+		listCommands(true)
+		return
 	}
 
-	// debug output
-	fmt.Printf("action %v, params %v \n", action, actionParams)
-	fmt.Printf("engine %v \n", engine)
+	defaults := engine.EmptyConfig() // add defaults here
+	//
+	//
+	//
 
-	switch {
-	/*case action == "new":
-	      newPost(actionParams, engine)
-	  case action == "edit":
-	      editPost(actionParams, engine)
-	  case action == "publish":
-	      publishPosts(actionParams, engine)
-	*/
-	default:
-		{
-			printHeader()
-			listCommands(true)
+	config := readConfig(configFile, defaults)
+	params := args[1:len(args)]
+
+	done, err := blog.Workflow(config, action, params)
+
+	if !done {
+		fmt.Printf("Can't do action '%v' with params: %v \n", action, params)
+		if err != nil {
+			fmt.Println("ERR:\n")
+			fmt.Println(err)
 		}
 	}
 }
