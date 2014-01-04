@@ -24,16 +24,6 @@ import (
 	"sort"
 )
 
-// TODO: remove hardcode
-func availableCommands() map[string]string {
-	var COMMANDS = map[string]string{
-		"new":     "<post-name> [<params>] - creates new post and opens editor",
-		"edit":    "<post-name>           - opens post in editor",
-		"publish": "[<post-name>]      - renders markdown posts to html"}
-
-	return COMMANDS
-}
-
 //
 //
 func printHeader() {
@@ -55,7 +45,7 @@ func printUsage() {
 //
 //
 func listCommands(prettyprint bool) {
-	cmds := availableCommands()
+	cmds := blog.AvailableCommands()
 
 	var keys []string
 	for k := range cmds {
@@ -64,7 +54,7 @@ func listCommands(prettyprint bool) {
 	sort.Strings(keys)
 	for _, command := range keys {
 		if prettyprint {
-			fmt.Println(" ■", command, cmds[command])
+			fmt.Println("  ■", command, cmds[command])
 		} else {
 			fmt.Println(command)
 		}
@@ -136,26 +126,27 @@ func main() {
 	printHeader()
 
 	if help || len(args) == 0 {
+		// TODO: --help <command>
 		printUsage()
 		listCommands(true)
 		return
 	}
 
-	defaults := engine.EmptyConfig() // add defaults here
+	defaults := engine.EmptyConfig()
 	//
-	//
+	// TODO: add defaults here
 	//
 
 	config := readConfig(configFile, defaults)
 	params := args[1:len(args)]
 
-	done, err := blog.Workflow(config, action, params)
+	result, err := blog.Workflow(config, action, params)
 
-	if !done {
-		fmt.Printf("Can't do action '%v' with params: %v \n", action, params)
-		if err != nil {
-			fmt.Println("ERR:\n")
-			fmt.Println(err)
-		}
+	if err != nil {
+		fmt.Println("ERR:\n")
+		fmt.Println(err)
 	}
+
+	fmt.Println(result)
+
 }

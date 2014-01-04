@@ -13,65 +13,42 @@ Static blog generator for http://sernyak.com
 package blog
 
 import (
+	"fmt"
 	engine "github.com/ndrew/stagosaurus"
 )
 
-/*func newPost(args []string, engine *stagosaurus.Site) {
-    // do something here
-    fmt.Println("new post!")
-    editPost(args, engine)
+func newPost(args []string) (string, error) {
+	fmt.Println("NEW!\n")
+
+	return "You've did it", nil
 }
 
-func editPost(args []string, engine *stagosaurus.Site) {
-    // do something here
-    fmt.Println("edit post!")
+///////////////////////
+// command api stuff
+//	 <?> extend this to an rpc api
+//
+
+var COMMANDS = map[string]func([]string) (string, error){
+	"new": newPost,
 }
 
-func publishPosts(args []string, engine *stagosaurus.Site) {
-    // do something here
-    fmt.Println("publish!")
-}*/
+var DESCRIPTIONS = map[string]string{
+	"new":     "<post-name> [<params>] - creates new post and opens editor",
+	"edit":    "<post-name>           - opens post in editor",
+	"publish": "[<post-name>]      - renders markdown posts to html",
+}
 
-/*func getConfig(configFile string) *engine.Config {
-	cfg := new(blog.Config)
-	// set defaults
-	cfg.BaseUrl = "http://localhost:666/blog/"
+func AvailableCommands() map[string]string {
+	return DESCRIPTIONS
+}
 
-	// read config if needed
-	var configFileAbs, err = filepath.Abs(configFile)
-	if err == nil {
-		err = cfg.ReadConfig(configFileAbs)
-		if err != nil {
-			println(err)
-		}
-	} else {
-		println("Can't load config " + configFileAbs)
-	}
-	return cfg
-}*/
+func Workflow(config *engine.Config, action string, params []string) (string, error) {
+	// TODO: create stagosaurus engine
 
-func Workflow(config *engine.Config, action string, params []string) (bool, error) {
-
-	/*renderingStrategy := new(engine.RenderingStrategy)
-	postsFactory := new(engine.FileSystem)
-	// todo: do this via config
-	postsFactory.PostsDir = "/Users/ndrw/Desktop/dev/site/blog/posts"
-
-	engine := engine.New(config, postsFactory, renderingStrategy, nil) // todo: add depoloyer
-	*/
-
-	switch {
-	/*case action == "new":
-	      newPost(actionParams, engine)
-	  case action == "edit":
-	      editPost(actionParams, engine)
-	  case action == "publish":
-	      publishPosts(actionParams, engine)
-	*/
-	default:
-		{
-		}
+	var command = COMMANDS[action]
+	if nil != command {
+		return command(params)
 	}
 
-	return false, nil
+	return fmt.Sprintf("Can't do action '%v' with params: %v \n", action, params), nil
 }
