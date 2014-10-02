@@ -133,12 +133,10 @@ func main() {
 	}
 
 	defaults := engine.EmptyConfig()
-	// TODO: add defaults
+	// TODO: add hardcoded defaults
 
 	config := readConfig(configFile, defaults)
 	params := args[1:len(args)]
-
-	//fmt.Println(*config)
 
 	result, err := blog.Workflow(*config, action, params)
 
