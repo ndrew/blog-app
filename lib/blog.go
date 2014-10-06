@@ -14,6 +14,7 @@ package blog
 
 import (
 	stago "./../../stagosaurus" //"github.com/ndrew/stagosaurus"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -34,6 +35,14 @@ type BlogGenerator struct {
 // PostsSource
 //
 func (this *BlogGenerator) GetPosts(meta stago.Config) ([]stago.Post, error) {
+	conf := stago.HumanConfig(meta)
+
+	source, _ := conf.String("source-dir")
+
+	println("====================")
+	print("retrieving posts from ")
+	println(source)
+
 	//assets := []stago.Asset{}
 	posts := []stago.Post{}
 
@@ -149,15 +158,44 @@ func (this *BlogGenerator) Deploy(config stago.Config, posts []stago.Post) ([]st
 	return []stago.Post{}, nil
 }
 
-//
-//
-func Workflow(config stago.Config, action string, params []string) (string, error) {
-	// TODO: create stagosaurus engine
+func (generator *BlogGenerator) BuildAll(cfg stago.Config) error {
+	// 0) setup
+	config := stago.HumanConfig(cfg)
 
-	var command = COMMANDS[action]
-	if nil != command {
-		return command(config, params)
+	// validate the config
+	validator := map[interface{}](func(interface{}) bool){
+		"templates": func(v interface{}) bool {
+			dict := v.(map[string]interface{})
+
+			return dict["index"] != nil && dict["post"] != nil
+		},
+	}
+	if original, _ := config.Validate(validator); !original {
+		return errors.New("Error with configuration!")
 	}
 
-	return fmt.Sprintf("Can't do action '%v' with params: %v \n", action, params), nil
+	// 1) posts
+	postsCfg, _ := config.SubConfig("posts")
+	posts, err := generator.GetPosts(postsCfg)
+	if err != nil {
+		return err
+	}
+	// println(posts)
+	// return nil
+
+	// 2) render
+	renderCfg, _ := config.SubConfig("templates")
+	renderedPosts, err := generator.Render(renderCfg, posts)
+	if err != nil {
+		return err
+	}
+
+	// 3) deploy
+	_, err = generator.Deploy(config, renderedPosts)
+	if err != nil {
+		return err
+	}
+
+	// 4) promote
+	return nil
 }

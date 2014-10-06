@@ -63,18 +63,18 @@ func listCommands(prettyprint bool) {
 
 //
 //
-func readConfig(path string, defaults engine.Config) *engine.Config {
+func readConfig(path string, defaults engine.Config) engine.Config {
 	cfg := engine.NewConfig(defaults)
 
 	var realpath, err = filepath.Abs(path)
 	if err != nil {
-		return &cfg
+		return cfg
 	}
 
 	source, err := ioutil.ReadFile(realpath)
 	if err != nil {
 		fmt.Printf("ERR: Config file '%v' is not found.\n", realpath)
-		return &cfg
+		return cfg
 	}
 
 	//
@@ -86,7 +86,7 @@ func readConfig(path string, defaults engine.Config) *engine.Config {
 
 	if err != nil || len(data) == 0 {
 		fmt.Printf("ERR: can't parse JSON from '%v'\n", realpath)
-		return &cfg
+		return cfg
 	}
 
 	for k, v := range data {
@@ -101,7 +101,20 @@ func readConfig(path string, defaults engine.Config) *engine.Config {
 		}
 	}
 
-	return &cfg
+	return cfg
+}
+
+//
+//
+func Workflow(config engine.Config, action string, params []string) (string, error) {
+	// TODO: create stagosaurus engine
+
+	var command = blog.COMMANDS[action]
+	if nil != command {
+		return command(config, params)
+	}
+
+	return fmt.Sprintf("Can't do action '%v' with params: %v \n", action, params), nil
 }
 
 //
@@ -138,7 +151,7 @@ func main() {
 	config := readConfig(configFile, defaults)
 	params := args[1:len(args)]
 
-	result, err := blog.Workflow(*config, action, params)
+	result, err := Workflow(config, action, params)
 
 	if err != nil {
 		fmt.Println("ERR:\n")
