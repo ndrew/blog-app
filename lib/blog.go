@@ -39,9 +39,11 @@ func (this *BlogGenerator) GetPosts(meta stago.Config) ([]stago.Post, error) {
 
 	source, _ := conf.String("source-dir")
 
-	println("====================")
-	print("retrieving posts from ")
-	println(source)
+	fmt.Print("* retrieving posts from ")
+	fmt.Println(source)
+
+	fs, _ := stago.NewFileSystem(conf)
+	fmt.Println(fs)
 
 	//assets := []stago.Asset{}
 	posts := []stago.Post{}
@@ -158,6 +160,8 @@ func (this *BlogGenerator) Deploy(config stago.Config, posts []stago.Post) ([]st
 	return []stago.Post{}, nil
 }
 
+//
+//
 func (generator *BlogGenerator) BuildAll(cfg stago.Config) error {
 	// 0) setup
 	config := stago.HumanConfig(cfg)
